@@ -24,10 +24,12 @@ def main():
     if embed_again:
         X_test_embedded = None
         if method == "SNE":
-            my_SNE = My_SNE(X=X_train, n_components=2)
-            X_train_embedded = my_SNE.SNE_embed(max_iterations=1000, step_checkpoint=20, calculate_again=True)
+            my_SNE = My_SNE(X=X_train, y=y_train, n_components=2, learning_rate=0.1, max_iterations=1000, step_checkpoint=5)
+            X_train_embedded = my_SNE.fit_transform(continue_from_which_iteration=119)
             if embed_test_data:
                 pass
+        elif method == "tSNE":
+            pass
         #---- save the embeddings:
         save_variable(variable=X_train_embedded, name_of_variable="X_train_embedded", path_to_save='./saved_files/'+dataset+"/"+method+"/")
         save_variable(variable=y_train, name_of_variable="y_train", path_to_save='./saved_files/'+dataset+"/"+method+"/")
@@ -65,7 +67,8 @@ def read_dataset(dataset):
     if dataset == "MNIST":
         subset_of_MNIST = True
         pick_subset_of_MNIST_again = True
-        MNIST_subset_cardinality_training = 200
+        # MNIST_subset_cardinality_training = 200
+        MNIST_subset_cardinality_training = 50
         # MNIST_subset_cardinality_testing = 10
         MNIST_subset_cardinality_testing = 50
         path_dataset = "./datasets/MNIST/"
