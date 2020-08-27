@@ -15,7 +15,8 @@ def main():
     #---- settings:
     dataset = "MNIST"  #--> MNIST, ORL_glasses
     method = "tSNE_general_degrees" #--> SNE, SNE_symmetric, tSNE, tSNE_general_degrees
-    embed_test_data = False
+    embed_training_data_again = False
+    embed_test_data = True
     embed_again = True
     color_map = plt.cm.jet  #--> hsv, brg (good for S curve), rgb, jet, gist_ncar (good for one blob), tab10, Set1, rainbow, Spectral #--> https://matplotlib.org/3.2.1/tutorials/colors/colormaps.html
 
@@ -24,30 +25,50 @@ def main():
 
     #---- embedding:
     if embed_again:
+        X_train_embedded = None
         X_test_embedded = None
         if method == "SNE":
-            my_SNE = My_SNE(X=X_train, y=y_train, n_components=2, learning_rate=0.1, max_iterations=1000, step_checkpoint=5)
-            X_train_embedded = my_SNE.fit_transform(continue_from_which_iteration=None)
+            model_ = My_SNE(X=X_train, y=y_train, n_components=2, learning_rate=0.1, max_iterations=1000, step_checkpoint=5)
+            if embed_training_data_again:
+                X_train_embedded = model_.fit_transform(continue_from_which_iteration=None)
+            which_training_iteration_to_load = 159
             if embed_test_data:
-                pass
+                X_test_embedded = model_.transform_outOfSample(X_test=X_test, which_training_iteration_to_load=which_training_iteration_to_load, symmetric_method=False)
+            X_train_embedded = model_.read_the_saved_training_embedding(which_training_iteration_to_load, symmetric_method=False)
         elif method == "SNE_symmetric":
-            my_SNE = My_SNE(X=X_train, y=y_train, n_components=2, learning_rate=100, max_iterations=1000, step_checkpoint=5)
-            X_train_embedded = my_SNE.fit_transform_symmetric(continue_from_which_iteration=None)
+            model_ = My_SNE(X=X_train, y=y_train, n_components=2, learning_rate=100, max_iterations=1000, step_checkpoint=5)
+            if embed_training_data_again:
+                X_train_embedded = model_.fit_transform_symmetric(continue_from_which_iteration=None)
+            which_training_iteration_to_load = 129
+            if embed_test_data:
+                X_test_embedded = model_.transform_outOfSample(X_test=X_test, which_training_iteration_to_load=which_training_iteration_to_load, symmetric_method=True)
+            X_train_embedded = model_.read_the_saved_training_embedding(which_training_iteration_to_load, symmetric_method=True)
         elif method == "tSNE":
-            my_tSNE = My_tSNE(X=X_train, y=y_train, n_components=2, learning_rate=100, max_iterations=1000, step_checkpoint=5, early_exaggeration=True)
-            X_train_embedded = my_tSNE.fit_transform(continue_from_which_iteration=None)
+            model_ = My_tSNE(X=X_train, y=y_train, n_components=2, learning_rate=100, max_iterations=1000, step_checkpoint=5, early_exaggeration=True)
+            if embed_training_data_again:
+                X_train_embedded = model_.fit_transform(continue_from_which_iteration=None)
+            which_training_iteration_to_load = 99
+            if embed_test_data:
+                X_test_embedded = model_.transform_outOfSample(X_test=X_test, which_training_iteration_to_load=which_training_iteration_to_load)
+            X_train_embedded = model_.read_the_saved_training_embedding(which_training_iteration_to_load)
         elif method == "tSNE_general_degrees":
-            my_tSNE_general = My_tSNE_general(X=X_train, y=y_train, n_components=2, learning_rate=100, learning_rate_forDegree=0.1, max_iterations=1000, step_checkpoint=5, early_exaggeration=True)
-            X_train_embedded = my_tSNE_general.fit_transform(continue_from_which_iteration=None)
+            model_ = My_tSNE_general(X=X_train, y=y_train, n_components=2, learning_rate=100, learning_rate_forDegree=0.1, max_iterations=1000, step_checkpoint=5, early_exaggeration=True)
+            if embed_training_data_again:
+                X_train_embedded = model_.fit_transform(continue_from_which_iteration=None)
+            which_training_iteration_to_load = 99
+            if embed_test_data:
+                X_test_embedded = model_.transform_outOfSample(X_test=X_test, which_training_iteration_to_load=which_training_iteration_to_load)
+            X_train_embedded = model_.read_the_saved_training_embedding(which_training_iteration_to_load)
         #---- save the embeddings:
-        save_variable(variable=X_train_embedded, name_of_variable="X_train_embedded", path_to_save='./saved_files/'+dataset+"/"+method+"/")
-        save_variable(variable=y_train, name_of_variable="y_train", path_to_save='./saved_files/'+dataset+"/"+method+"/")
+        # if X_train_embedded is not None:
+        #     save_variable(variable=X_train_embedded, name_of_variable="X_train_embedded", path_to_save='./saved_files/'+dataset+"/"+method+"/")
+        #     save_variable(variable=y_train, name_of_variable="y_train", path_to_save='./saved_files/'+dataset+"/"+method+"/")
         if X_test_embedded is not None:
             save_variable(variable=X_test_embedded, name_of_variable="X_test_embedded", path_to_save='./saved_files/'+dataset+"/"+method+"/")
             save_variable(variable=y_test, name_of_variable="y_test", path_to_save='./saved_files/'+dataset+"/"+method+"/")
     else:
-        X_train_embedded = load_variable(name_of_variable="X_train_embedded", path='./saved_files/'+dataset+"/"+method+"/")
-        y_train = load_variable(name_of_variable="y_train", path='./saved_files/'+dataset+"/"+method+"/")
+        # X_train_embedded = load_variable(name_of_variable="X_train_embedded", path='./saved_files/'+dataset+"/"+method+"/")
+        # y_train = load_variable(name_of_variable="y_train", path='./saved_files/'+dataset+"/"+method+"/")
         if os.path.isfile('./saved_files/'+dataset+"/"+method+"/X_test_embedded.pckl"): #--> if the test embedding file exists
             X_test_embedded = load_variable(name_of_variable="X_test_embedded", path='./saved_files/'+dataset+"/"+method+"/")
             y_test = load_variable(name_of_variable="y_test", path='./saved_files/'+dataset+"/"+method+"/")
@@ -55,13 +76,14 @@ def main():
             X_test_embedded = None
 
     #---- plot training embedding:
-    plt.scatter(X_train_embedded[0, :], X_train_embedded[1, :], c=y_train, cmap=color_map, edgecolors='k')
-    classes = class_names
-    n_classes = len(classes)
-    cbar = plt.colorbar(boundaries=np.arange(n_classes+1)-0.5)
-    cbar.set_ticks(np.arange(n_classes))
-    cbar.set_ticklabels(classes)
-    plt.show()
+    if X_train_embedded is not None:
+        plt.scatter(X_train_embedded[0, :], X_train_embedded[1, :], c=y_train, cmap=color_map, edgecolors='k')
+        classes = class_names
+        n_classes = len(classes)
+        cbar = plt.colorbar(boundaries=np.arange(n_classes+1)-0.5)
+        cbar.set_ticks(np.arange(n_classes))
+        cbar.set_ticklabels(classes)
+        plt.show()
     #---- plot test embedding:
     if X_test_embedded is not None:
         plt.scatter(X_train_embedded[0, :], X_train_embedded[1, :], c=y_train, cmap=color_map, alpha=0.07)

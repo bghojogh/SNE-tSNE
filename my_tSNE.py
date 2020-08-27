@@ -5,6 +5,7 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 import glob
+from sklearn.metrics.pairwise import pairwise_kernels
 
 
 class My_tSNE:
@@ -192,3 +193,34 @@ class My_tSNE:
                 os.makedirs(path_save)
             plt.savefig(path_save+name_of_plot)
             plt.close()
+
+    def transform_outOfSample(self, X_test, which_training_iteration_to_load):
+        # X_test, X_test_transformed: rows are features and columns are samples
+        ##### read the training embedding:
+        X_transformed = self.read_the_saved_training_embedding(which_training_iteration_to_load)
+        X_transformed = X_transformed.T  #--> make it row-wise
+        ##### embedding the out-of-sample:
+        kernel_X_X = pairwise_kernels(X=self.X.T, Y=self.X.T, metric="rbf")
+        kernel_Xtest_X = pairwise_kernels(X=X_test.T, Y=self.X.T, metric="rbf")
+        n_training_samples = self.X.shape[1]
+        K = np.zeros((n_training_samples, n_training_samples))
+        for sample_index in range(n_training_samples):
+            K[sample_index, :] = kernel_X_X[sample_index, :] * (1 / np.sum(kernel_X_X[sample_index, :]))
+        n_test_samples = X_test.shape[1]
+        K_test = np.zeros((n_test_samples, n_training_samples))
+        for test_sample_index in range(n_test_samples):
+            K_test[test_sample_index, :] = kernel_Xtest_X[test_sample_index, :] * (1 / np.sum(kernel_Xtest_X[test_sample_index, :]))
+        A = np.linalg.pinv(K) @ X_transformed
+        X_test_transformed = K_test @ A
+        X_test_transformed = X_test_transformed.T  #--> make it column-wise
+        return X_test_transformed
+
+    def read_the_saved_training_embedding(self, which_training_iteration_to_load):
+        # X_transformed: column-wise
+        path_to_save = './saved_files/tSNE/'
+        paths_ = glob.glob(path_to_save+'X_transformed/*')
+        paths_ = [path_.split("\\")[-1] for path_ in paths_]
+        paths_ = [path_.split(".")[0] for path_ in paths_]
+        name_of_variable = [path_ for path_ in paths_ if "itr"+str(which_training_iteration_to_load) in path_][0]
+        X_transformed = self.load_variable(name_of_variable=name_of_variable, path=path_to_save+'X_transformed/')
+        return X_transformed
