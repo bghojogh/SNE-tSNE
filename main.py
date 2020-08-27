@@ -1,5 +1,6 @@
 from my_SNE import My_SNE
 from my_tSNE import My_tSNE
+from my_tSNE_general import My_tSNE_general
 import numpy as np
 import pickle
 import os
@@ -13,7 +14,7 @@ from skimage.transform import resize
 def main():
     #---- settings:
     dataset = "MNIST"  #--> MNIST, ORL_glasses
-    method = "tSNE" #--> SNE, SNE_symmetric, tSNE
+    method = "tSNE_general_degrees" #--> SNE, SNE_symmetric, tSNE, tSNE_general_degrees
     embed_test_data = False
     embed_again = True
     color_map = plt.cm.jet  #--> hsv, brg (good for S curve), rgb, jet, gist_ncar (good for one blob), tab10, Set1, rainbow, Spectral #--> https://matplotlib.org/3.2.1/tutorials/colors/colormaps.html
@@ -35,6 +36,9 @@ def main():
         elif method == "tSNE":
             my_tSNE = My_tSNE(X=X_train, y=y_train, n_components=2, learning_rate=100, max_iterations=1000, step_checkpoint=5, early_exaggeration=True)
             X_train_embedded = my_tSNE.fit_transform(continue_from_which_iteration=None)
+        elif method == "tSNE_general_degrees":
+            my_tSNE_general = My_tSNE_general(X=X_train, y=y_train, n_components=2, learning_rate=100, learning_rate_forDegree=0.1, max_iterations=1000, step_checkpoint=5, early_exaggeration=True)
+            X_train_embedded = my_tSNE_general.fit_transform(continue_from_which_iteration=None)
         #---- save the embeddings:
         save_variable(variable=X_train_embedded, name_of_variable="X_train_embedded", path_to_save='./saved_files/'+dataset+"/"+method+"/")
         save_variable(variable=y_train, name_of_variable="y_train", path_to_save='./saved_files/'+dataset+"/"+method+"/")
